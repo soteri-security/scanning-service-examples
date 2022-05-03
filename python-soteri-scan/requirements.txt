@@ -1,0 +1,5 @@
+# HTTPX with additional dependencies for HTTP/2 support
+httpx[http2]==0.22.0
+
+# Colored output
+sty==1.0.4
