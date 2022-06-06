@@ -176,7 +176,7 @@ def colorize_line(finding: dict) -> Tuple[str, bool]:
     Returns:
         The colorized line, and a boolean indicating if this is the full line.
     """
-    line_present = finding['line'] is not None
+    line_present = 'line' in finding
     line = finding['line'] if line_present else finding['finding']
     start = finding['startOffset'] if line_present else 0
     end = finding['endOffset'] if line_present else len(line)
@@ -218,11 +218,16 @@ def report_findings(response: dict, include_skipped: bool) -> None:
             num_findings = len([finding for finding in file_result['findings'] if not finding['allowlisted']])
             status = "CLEAN" if num_findings == 0 else "ISSUES FOUND"
         reason = ""
-        if file_result['failureReason'] == "UNKNOWN":
-            reason = ": Unknown failure. Contact us at https://support.soteri.io"
-        elif file_result['failureReason'] == "TOO_MANY_FINDINGS":
-            reason = ": The file was partially scanned, but there were too many findings, and scanning was stopped."
-        elif file_result['skipReason'] == "UNSUPPORTED_FORMAT":
+        failure_reason = file_result.get('failureReason')
+        if failure_reason:
+            if file_result['failureReason'] == "UNKNOWN":
+                reason = ": Unknown failure. Contact us at https://support.soteri.io"
+            elif file_result['failureReason'] == "TOO_MANY_FINDINGS":
+                reason = ": The file was partially scanned, but there were too many findings, and scanning was stopped."
+            else:
+                # Should only hit this branch if we added an enum on the backend and forgot to handle it here.
+                reason = failure_reason
+        elif file_result.get('skipReason') == "UNSUPPORTED_FORMAT":
             reason = ": The file could not be decoded as UTF-8."
         print(f"File {fg.white + file_result['filename'] + fg.rs + CLEAR_EOL}: {colorize_status(status)}{reason}")
         for finding in file_result['findings']:
